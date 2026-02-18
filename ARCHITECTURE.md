@@ -1,86 +1,8 @@
-# AI Context and Memory Management System Architecture
+# Architecture Details
 
-## System Overview
+For the high-level system overview and architecture diagram, please refer to [README.md](README.md).
 
-This system is designed to provide a robust memory management layer for AI agents in a business environment. It differentiates between various types of memory (immediate, episodic, semantic, temporal) and manages their lifecycle from ingestion to archival, ensuring relevant context is always available for decision-making.
-
-### Architecture Diagram
-
-```mermaid
-graph TD
-    %% Input Layer
-    subgraph Input_Layer [Input Layer]
-        In1[Invoice / Document] --> |Ingest| API
-        In2[Support Ticket] --> |Ingest| API
-        In3[User Query] --> |Ingest| API
-    end
-
-    %% API Gateway
-    API[API Gateway] --> |Route| P[Processing Engine]
-    
-    %% Processing & Routing
-    subgraph Processing_Layer [Processing & Routing]
-        P --> |Extract Entities| NER[Named Entity Recognition]
-        P --> |Analyze Sentiment| SA[Sentiment Analysis]
-        P --> |Vectorize| EMB[Embedding Model]
-    end
-
-    %% Memory Stores
-    subgraph Memory_Stores [Memory Stores]
-        direction TB
-        IM[Immediate Memory<br/>(Short-term/Working)]
-        EM[Episodic Memory<br/>(Event-based Logs)]
-        SM[Semantic Memory<br/>(Structured Facts/KG)]
-        TM[Temporal Memory<br/>(Time-series Trends)]
-    end
-
-    %% Data Flow to Memory
-    NER --> SM
-    NER --> EM
-    SA --> EM
-    EMB --> IM
-    EMB --> EM
-
-    %% Lifecycle Management
-    subgraph Lifecycle_Management [Lifecycle Management]
-        MLM[Memory Lifecycle Manager]
-        ARC[Archive Storage<br/>(Cold Store)]
-        
-        MLM --> |Monitor Access| IM
-        MLM --> |Consolidate| EM
-        MLM --> |Prune/Archive| ARC
-        
-        IM -.-> |Promote if recurring| EM
-        EM -.-> |Abstract patterns| SM
-        EM -.-> |Move stale events| ARC
-    end
-
-    %% Start of Retrieval Flow
-    subgraph Retrieval_System [Retrieval & Context]
-        Q[Query / Context Request] --> RE[Retrieval Engine]
-        
-        RE --> |Fetch Relevant| IM
-        RE --> |Search Similar| EM
-        RE --> |Query Facts| SM
-        RE --> |Get Trends| TM
-        
-        RE --> SC[Scoring Module]
-        
-        SC --> |Rank & Filter| RC[Ranked Context]
-        
-        RC --> MAC[Multi-Agent Shared Context]
-    end
-
-    %% Experiential Pattern Engine
-    subgraph Pattern_Engine [Experiential Pattern Engine]
-        EPE[Pattern Recognizer]
-        
-        EM --> |Feed Events| EPE
-        TM --> |Feed Trends| EPE
-        EPE --> |Update Rules| SM
-    end
-
-```
+This document outlines the specific reasoning behind component choices, the mathematical models for retrieval scoring, and the logic for memory lifecycle management.
 
 ## Component Reasoning
 
@@ -134,10 +56,9 @@ Where:
 
 1. **Ingestion**: New memory $m$ created at $t_0$ with $Importance(m)$.
 2. **Access**: Every time $m$ is retrieved, update:
-   - $LastAccess(m) = t_{now}$
-   - $AccessCount(m) \leftarrow AccessCount(m) + 1$
-3. **Decay (Periodic Job)**:
-   - $CurrentScore(m) = Importance(m) \cdot e^{-\alpha (t_{now} - LastAccess(m))}$
-   - If $CurrentScore(m) < Threshold_{archive}$, move to **Archive**.
-   - If $AccessCount(m) > Threshold_{consolidate}$, trigger **Pattern Engine** to generalize.
-
+3.    - $LastAccess(m) = t_{now}$
+4.    - $AccessCount(m) \leftarrow AccessCount(m) + 1$
+5. **Decay (Periodic Job)**:
+6.    - $CurrentScore(m) = Importance(m) \cdot e^{-\alpha (t_{now} - LastAccess(m))}$
+7.    - If $CurrentScore(m) < Threshold_{archive}$, move to **Archive**.
+8.    - If $AccessCount(m) > Threshold_{consolidate}$, trigger **Pattern Engine** to generalize.

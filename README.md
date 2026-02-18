@@ -15,7 +15,7 @@ A robust memory management layer designed for AI agents in business environments
 
 ## Architecture
 
-The system follows a layered architecture for processing, storing, and retrieving context.
+The system follows a layered architecture for processing, storing, and retrieving context. For detailed component reasoning and scoring math, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ```mermaid
 graph TD
