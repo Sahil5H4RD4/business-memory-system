@@ -1,467 +1,1158 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Context Memory Engine — Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
-        /* ─── Reset & Base ─── */
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #06080f;
+            --bg-card: rgba(15, 20, 35, 0.65);
+            --bg-card-hover: rgba(20, 28, 50, 0.7);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-hover: rgba(99, 102, 241, 0.3);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-indigo: #818cf8;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #a78bfa;
+            --accent-amber: #f59e0b;
+            --danger: #f87171;
+            --success: #4ade80;
+            --warning: #facc15;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background: #0b0f1a;
-            color: #e2e8f0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             min-height: 100vh;
             overflow-x: hidden;
         }
 
-        /* ─── Background Gradient ─── */
         body::before {
             content: '';
             position: fixed;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
-            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-                        radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
-                        radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 40%, rgba(99, 102, 241, 0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 50% at 85% 25%, rgba(6, 182, 212, 0.05) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 60% at 50% 90%, rgba(168, 85, 247, 0.04) 0%, transparent 55%);
             z-index: -1;
-            animation: bgFloat 20s ease-in-out infinite;
+            animation: ambientDrift 25s ease-in-out infinite alternate;
         }
-        @keyframes bgFloat {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(-2%, -1%); }
+
+        @keyframes ambientDrift {
+            0% {
+                opacity: 0.8;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
         }
 
         /* ─── Header ─── */
         header {
-            padding: 1.5rem 2rem;
+            padding: 1.2rem 2rem;
             text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            background: rgba(11, 15, 26, 0.8);
-            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            background: rgba(6, 8, 15, 0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             position: sticky;
             top: 0;
             z-index: 100;
         }
+
         header h1 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #818cf8, #06b6d4, #a78bfa);
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #818cf8 0%, #06b6d4 40%, #a78bfa 100%);
+            background-clip: text;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -0.02em;
         }
-        header p { color: #64748b; font-size: 0.85rem; margin-top: 0.3rem; }
 
-        /* ─── Layout ─── */
-        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
-        .grid-full { grid-column: 1 / -1; }
+        header p {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            letter-spacing: 0.02em;
+        }
 
-        /* ─── Glass Card ─── */
+        /* ─── Container ─── */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* ─── Actions ─── */
+        .actions {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.2rem;
+            align-items: center;
+        }
+
+        .actions .status-msg {
+            margin-left: auto;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            transition: opacity 0.3s;
+        }
+
+        /* ─── Buttons ─── */
+        .btn {
+            padding: 0.55rem 1.1rem;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            background: rgba(255, 255, 255, 0.1);
+            transition: opacity 0.25s;
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
+        }
+
+        .btn-seed {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: #fff;
+        }
+
+        .btn-seed:hover {
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.35);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.35);
+        }
+
+        .btn-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        /* ─── Stats Row ─── */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 1rem 0.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+        }
+
+        .stat-card .icon {
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-card .value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent-indigo), var(--accent-cyan));
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card .label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-top: 0.3rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+        }
+
+        /* ─── Grid Layout ─── */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .grid-full {
+            grid-column: 1 / -1;
+        }
+
+        /* ─── Card ─── */
         .card {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(255,255,255,0.06);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             border-radius: 16px;
             padding: 1.2rem;
-            backdrop-filter: blur(12px);
-            transition: transform 0.2s, box-shadow 0.2s;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s;
         }
+
         .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            border-color: var(--border-hover);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
         }
-        .card h2 {
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #94a3b8;
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 0.8rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h2 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-secondary);
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        /* ─── Status Badge ─── */
-        .badge {
-            display: inline-flex; align-items: center; gap: 0.3rem;
-            padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.75rem;
-            font-weight: 600;
+        .card-header .count-badge {
+            font-size: 0.7rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--accent-indigo);
+            font-weight: 700;
         }
-        .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
-        .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
-        .badge-warning { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
-        .badge-info { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
-
-        /* ─── Buttons ─── */
-        .btn {
-            padding: 0.6rem 1.2rem; border: none; border-radius: 10px;
-            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
-            cursor: pointer; transition: all 0.2s;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #fff;
-        }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
-        .btn-seed {
-            background: linear-gradient(135deg, #06b6d4, #0891b2);
-            color: #fff;
-        }
-        .btn-seed:hover { box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
-        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 8px; }
-
-        /* ─── Actions Bar ─── */
-        .actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
 
         /* ─── Table ─── */
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
         th {
-            text-align: left; padding: 0.6rem 0.8rem; font-weight: 600;
-            color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.08);
-            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+            text-align: left;
+            padding: 0.55rem 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
+
         td {
-            padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+            padding: 0.55rem 0.7rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.025);
         }
-        tr:hover td { background: rgba(99, 102, 241, 0.04); }
+
+        tr {
+            transition: background 0.15s;
+        }
+
+        tr:hover td {
+            background: rgba(99, 102, 241, 0.035);
+        }
+
+        /* ─── Badge ─── */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        .badge-success {
+            background: rgba(34, 197, 94, 0.12);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+        }
+
+        .badge-warning {
+            background: rgba(234, 179, 8, 0.12);
+            color: var(--warning);
+            border: 1px solid rgba(234, 179, 8, 0.25);
+        }
+
+        .badge-info {
+            background: rgba(99, 102, 241, 0.12);
+            color: var(--accent-indigo);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+        }
+
+        .badge-cyan {
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--accent-cyan);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+        }
+
+        .badge-lg {
+            font-size: 0.85rem;
+            padding: 0.35rem 0.9rem;
+        }
 
         /* ─── Score Bar ─── */
         .score-bar {
-            display: flex; align-items: center; gap: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
         }
-        .score-bar .bar {
-            height: 6px; border-radius: 3px; flex: 1; max-width: 80px;
-            background: rgba(255,255,255,0.08);
+
+        .score-bar .track {
+            height: 5px;
+            border-radius: 3px;
+            flex: 1;
+            max-width: 70px;
+            background: rgba(255, 255, 255, 0.06);
             overflow: hidden;
         }
-        .score-bar .bar .fill {
-            height: 100%; border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-        .fill-temp { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
-        .fill-rel { background: linear-gradient(90deg, #6366f1, #818cf8); }
-        .fill-sem { background: linear-gradient(90deg, #a78bfa, #c084fc); }
-        .fill-final { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 
-        /* ─── Reason List ─── */
-        .reasons { list-style: none; padding: 0; }
-        .reasons li {
-            padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; font-size: 0.82rem;
-            background: rgba(239, 68, 68, 0.05); border-left: 3px solid #f87171;
-            border-radius: 0 8px 8px 0; color: #fca5a5;
+        .score-bar .fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
         }
-        .reasons.clear li {
-            background: rgba(34, 197, 94, 0.05); border-left-color: #4ade80;
+
+        .fill-t {
+            background: linear-gradient(90deg, #06b6d4, #22d3ee);
+        }
+
+        .fill-r {
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+        }
+
+        .fill-s {
+            background: linear-gradient(90deg, #a78bfa, #c084fc);
+        }
+
+        .fill-f {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .score-val {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            min-width: 30px;
+            font-weight: 500;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ─── Reasons ─── */
+        .reason-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            margin: 0.6rem 0;
+        }
+
+        .reason-item {
+            padding: 0.45rem 0.7rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: fadeSlideIn 0.3s ease-out backwards;
+        }
+
+        .reason-item.danger {
+            background: rgba(239, 68, 68, 0.06);
+            border-left: 3px solid var(--danger);
+            color: #fca5a5;
+        }
+
+        .reason-item.success {
+            background: rgba(34, 197, 94, 0.06);
+            border-left: 3px solid var(--success);
             color: #86efac;
         }
 
-        /* ─── Narrative ─── */
-        .narrative {
-            background: rgba(15, 23, 42, 0.6); border-radius: 10px;
-            padding: 1rem; font-size: 0.85rem; line-height: 1.6;
-            white-space: pre-line; color: #cbd5e1;
-            border: 1px solid rgba(255,255,255,0.04);
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
-        /* ─── Stats Row ─── */
-        .stats-row { display: flex; gap: 0.8rem; flex-wrap: wrap; }
-        .stat-item {
-            flex: 1; min-width: 120px; text-align: center;
-            background: rgba(15, 23, 42, 0.4); border-radius: 10px;
-            padding: 0.8rem;
+        /* ─── Trend Box ─── */
+        .trend-box {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            padding: 0.6rem 0.9rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin: 0.6rem 0;
         }
-        .stat-item .value {
-            font-size: 1.5rem; font-weight: 700;
-            background: linear-gradient(135deg, #818cf8, #06b6d4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+
+        .trend-box .trend-label {
+            font-weight: 700;
         }
-        .stat-item .label { font-size: 0.7rem; color: #64748b; margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .trend-box .trend-detail {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+        }
+
+        .trend-worsening .trend-label {
+            color: var(--danger);
+        }
+
+        .trend-improving .trend-label {
+            color: var(--success);
+        }
+
+        .trend-stable .trend-label {
+            color: var(--text-secondary);
+        }
+
+        /* ─── Severity Dot ─── */
+        .sev-dot {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .sev-1 {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .sev-2 {
+            background: rgba(134, 239, 172, 0.15);
+            color: #86efac;
+        }
+
+        .sev-3 {
+            background: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+        }
+
+        .sev-4 {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fb923c;
+        }
+
+        .sev-5 {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        /* ─── Issue Status ─── */
+        .status-open {
+            color: var(--danger);
+        }
+
+        .status-resolved {
+            color: var(--success);
+        }
 
         /* ─── Loading ─── */
         .loading {
-            text-align: center; padding: 2rem; color: #64748b;
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--text-muted);
         }
+
         .spinner {
-            width: 30px; height: 30px; border: 3px solid rgba(99, 102, 241, 0.2);
-            border-top-color: #6366f1; border-radius: 50%;
-            animation: spin 0.8s linear infinite; margin: 0 auto 0.5rem;
+            width: 26px;
+            height: 26px;
+            border: 2.5px solid rgba(99, 102, 241, 0.15);
+            border-top-color: var(--accent-indigo);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto 0.4rem;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ─── Empty State ─── */
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+
+        .empty-state .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            opacity: 0.5;
+        }
+
+        /* ─── Lifecycle Bar ─── */
+        .lifecycle-section {
+            margin-top: 0.8rem;
+        }
+
+        .lifecycle-bar-container {
+            display: flex;
+            gap: 2px;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.4rem 0;
+        }
+
+        .lifecycle-segment {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        .lifecycle-legend {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .lifecycle-legend span::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .leg-recent::before {
+            background: var(--success);
+        }
+
+        .leg-aging::before {
+            background: var(--warning);
+        }
+
+        .leg-stale::before {
+            background: var(--danger);
+        }
 
         /* ─── Responsive ─── */
         @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-            header h1 { font-size: 1.2rem; }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            header h1 {
+                font-size: 1.2rem;
+            }
         }
 
-        /* ─── Severity Colors ─── */
-        .sev-1 { color: #4ade80; }
-        .sev-2 { color: #86efac; }
-        .sev-3 { color: #facc15; }
-        .sev-4 { color: #fb923c; }
-        .sev-5 { color: #f87171; }
+        @media (max-width: 480px) {
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
 
-        /* ─── Trend Arrow ─── */
-        .trend-up { color: #f87171; }
-        .trend-down { color: #4ade80; }
-        .trend-flat { color: #94a3b8; }
+            .container {
+                padding: 0.8rem;
+            }
+        }
+
+        /* ─── Toast ─── */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            padding: 0.7rem 1.2rem;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            z-index: 200;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(12px);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .toast-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
     </style>
 </head>
+
 <body>
 
-<header>
-    <h1>🧠 Business Context Memory Engine</h1>
-    <p>Intelligent memory scoring, retrieval, and decision explainability</p>
-</header>
+    <header>
+        <h1>🧠 Business Context Memory Engine</h1>
+        <p>Intelligent memory scoring · retrieval · explainability</p>
+    </header>
 
-<div class="container">
-    <!-- Actions -->
-    <div class="actions">
-        <button class="btn btn-seed" onclick="seedData()">🌱 Seed Demo Data</button>
-        <button class="btn btn-primary" onclick="loadDashboard()">🔄 Refresh Dashboard</button>
-    </div>
+    <div class="container">
 
-    <!-- Stats -->
-    <div class="stats-row" id="stats-row">
-        <div class="stat-item"><div class="value" id="stat-suppliers">—</div><div class="label">Suppliers</div></div>
-        <div class="stat-item"><div class="value" id="stat-invoices">—</div><div class="label">Invoices</div></div>
-        <div class="stat-item"><div class="value" id="stat-issues">—</div><div class="label">Issues</div></div>
-        <div class="stat-item"><div class="value" id="stat-flagged">—</div><div class="label">Flagged</div></div>
-    </div>
-
-    <!-- Main Grid -->
-    <div class="grid" style="margin-top: 1.2rem;">
-
-        <!-- Suppliers -->
-        <div class="card">
-            <h2>📦 Suppliers</h2>
-            <div id="suppliers-list"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+        <!-- Actions -->
+        <div class="actions">
+            <button class="btn btn-seed" onclick="seedData()" id="btn-seed">🌱 Seed Demo Data</button>
+            <button class="btn btn-primary" onclick="loadDashboard()">🔄 Refresh</button>
+            <button class="btn btn-danger btn-sm" onclick="clearData()">🗑 Clear</button>
+            <span class="status-msg" id="status-msg"></span>
         </div>
 
-        <!-- Issues -->
-        <div class="card">
-            <h2>⚠️ Recent Issues</h2>
-            <div id="issues-list"><div class="loading"><div class="spinner"></div>Loading...</div></div>
-        </div>
-
-        <!-- Context Retrieval -->
-        <div class="card grid-full">
-            <h2>🔍 Context Retrieval — Select a Supplier</h2>
-            <div id="context-result">
-                <p style="color: #64748b; font-size: 0.85rem;">
-                    Click <strong>"Analyse"</strong> on any supplier to run the retrieval pipeline.
-                </p>
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="icon">📦</div>
+                <div class="value" id="stat-suppliers">—</div>
+                <div class="label">Suppliers</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">💰</div>
+                <div class="value" id="stat-invoices">—</div>
+                <div class="label">Invoices</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">⚠️</div>
+                <div class="value" id="stat-issues">—</div>
+                <div class="label">Open Issues</div>
+            </div>
+            <div class="stat-card">
+                <div class="icon">🚨</div>
+                <div class="value" id="stat-flagged">—</div>
+                <div class="label">Flagged</div>
             </div>
         </div>
+
+        <!-- Grid -->
+        <div class="grid">
+
+            <!-- Suppliers Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>📦 Suppliers</h2>
+                    <span class="count-badge" id="supplier-count">0</span>
+                </div>
+                <div id="suppliers-list">
+                    <div class="empty-state">
+                        <div class="icon">📦</div>No suppliers yet.<br>Click <strong>Seed Demo Data</strong> to begin.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Issues Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>⚠️ Open Issues</h2>
+                    <span class="count-badge" id="issue-count">0</span>
+                </div>
+                <div id="issues-list">
+                    <div class="empty-state">
+                        <div class="icon">✅</div>No open issues.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoices Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>💰 Invoices</h2>
+                    <span class="count-badge" id="invoice-count">0</span>
+                </div>
+                <div id="invoices-list">
+                    <div class="empty-state">
+                        <div class="icon">💰</div>No invoices yet.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lifecycle Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>⏳ Memory Lifecycle</h2>
+                </div>
+                <div id="lifecycle-display">
+                    <p style="color:var(--text-muted); font-size:0.82rem;">
+                        Shows how memory scores decay over time using exponential decay <code>e^(-0.01 × days)</code>.
+                    </p>
+                    <div style="margin-top:0.8rem;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Age</th>
+                                    <th>Decay Score</th>
+                                    <th>Weight</th>
+                                    <th>Class</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Today</td>
+                                    <td id="lc-0">—</td>
+                                    <td>1.0</td>
+                                    <td><span class="badge badge-success">Recent</span></td>
+                                </tr>
+                                <tr>
+                                    <td>30 days</td>
+                                    <td id="lc-30">—</td>
+                                    <td>1.0</td>
+                                    <td><span class="badge badge-success">Recent</span></td>
+                                </tr>
+                                <tr>
+                                    <td>90 days</td>
+                                    <td id="lc-90">—</td>
+                                    <td>1.0</td>
+                                    <td><span class="badge badge-success">Recent</span></td>
+                                </tr>
+                                <tr>
+                                    <td>6 months</td>
+                                    <td id="lc-180">—</td>
+                                    <td>0.5</td>
+                                    <td><span class="badge badge-warning">Aging</span></td>
+                                </tr>
+                                <tr>
+                                    <td>1 year</td>
+                                    <td id="lc-365">—</td>
+                                    <td>0.5</td>
+                                    <td><span class="badge badge-warning">Aging</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2+ years</td>
+                                    <td id="lc-730">—</td>
+                                    <td>0.0</td>
+                                    <td><span class="badge badge-danger">Archive</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Context Retrieval -->
+            <div class="card grid-full">
+                <div class="card-header">
+                    <h2>🔍 Context Retrieval Pipeline</h2>
+                    <span style="font-size:0.72rem; color:var(--text-muted);">Click "Analyse" on any supplier</span>
+                </div>
+                <div id="context-result">
+                    <div class="empty-state">
+                        <div class="icon">🔍</div>
+                        Select a supplier and click <strong>Analyse</strong> to run the intelligent retrieval pipeline.
+                        <br><small style="color:var(--text-muted);">Pipeline: Fetch → Score → Rank → Conflict Resolve →
+                            Explain</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
-</div>
 
-<script>
-const API = '';
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
 
-// ─── Load Dashboard ─── //
-async function loadDashboard() {
-    await Promise.all([loadSuppliers(), loadIssues()]);
-}
+    <script>
+        const API = '';
+        let flaggedSuppliers = new Set();
 
-// ─── Load Suppliers ─── //
-async function loadSuppliers() {
-    const el = document.getElementById('suppliers-list');
-    try {
-        const res = await fetch(`${API}/api/suppliers`);
-        const { data } = await res.json();
-        document.getElementById('stat-suppliers').textContent = data.length;
-
-        if (!data.length) {
-            el.innerHTML = '<p style="color:#64748b; font-size:0.85rem;">No suppliers yet. Click "Seed Demo Data" to get started.</p>';
-            return;
+        // ─── Toast ─── //
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.className = `toast toast-${type} show`;
+            t.textContent = msg;
+            setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        let flaggedCount = 0;
-        let html = '<table><thead><tr><th>Name</th><th>Industry</th><th>Rating</th><th>Action</th></tr></thead><tbody>';
-        for (const s of data) {
-            const ratingColor = s.rating < 0.4 ? 'badge-danger' : s.rating < 0.7 ? 'badge-warning' : 'badge-success';
-            html += `<tr>
-                <td><strong>${s.name}</strong></td>
-                <td>${s.industry || '—'}</td>
-                <td><span class="badge ${ratingColor}">${parseFloat(s.rating).toFixed(2)}</span></td>
-                <td><button class="btn btn-primary btn-sm" onclick="analyseSupplier(${s.id})">Analyse</button></td>
+        function setStatus(msg) {
+            document.getElementById('status-msg').textContent = msg;
+        }
+
+        // ─── Load Dashboard ─── //
+        async function loadDashboard() {
+            setStatus('Loading...');
+            await Promise.all([loadSuppliers(), loadIssues(), loadInvoices(), loadLifecycle()]);
+            setStatus(`Updated ${new Date().toLocaleTimeString()}`);
+        }
+
+        // ─── Load Suppliers ─── //
+        async function loadSuppliers() {
+            const el = document.getElementById('suppliers-list');
+            try {
+                const res = await fetch(`${API}/api/suppliers`);
+                const { data } = await res.json();
+                document.getElementById('stat-suppliers').textContent = data.length;
+                document.getElementById('supplier-count').textContent = data.length;
+
+                if (!data.length) {
+                    el.innerHTML = '<div class="empty-state"><div class="icon">📦</div>No suppliers yet.<br>Click <strong>Seed Demo Data</strong> to begin.</div>';
+                    return;
+                }
+
+                let html = '<table><thead><tr><th>Supplier</th><th>Industry</th><th>Rating</th><th></th></tr></thead><tbody>';
+                for (const s of data) {
+                    const r = parseFloat(s.rating);
+                    const rClass = r < 0.4 ? 'badge-danger' : r < 0.7 ? 'badge-warning' : 'badge-success';
+                    html += `<tr>
+                <td><strong style="color:var(--text-primary)">${s.name}</strong></td>
+                <td><span class="badge badge-cyan">${s.industry || '—'}</span></td>
+                <td><span class="badge ${rClass}">${r.toFixed(2)}</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="analyseSupplier(${s.id},'${s.name.replace(/'/g, "\\'")}')">Analyse</button></td>
             </tr>`;
-        }
-        html += '</tbody></table>';
-        el.innerHTML = html;
-    } catch(e) {
-        el.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
-    }
-}
-
-// ─── Load Issues ─── //
-async function loadIssues() {
-    const el = document.getElementById('issues-list');
-    try {
-        const res = await fetch(`${API}/api/suppliers`);
-        const { data: suppliers } = await res.json();
-
-        let allIssues = [];
-        for (const s of suppliers) {
-            const iRes = await fetch(`${API}/api/suppliers/${s.id}`);
-            const iData = await iRes.json();
-            // Get issues via context endpoint for count
+                }
+                html += '</tbody></table>';
+                el.innerHTML = html;
+            } catch (e) {
+                el.innerHTML = `<div class="empty-state" style="color:var(--danger)">⚠️ ${e.message}<br><small>Is the server running? <code>npm start</code></small></div>`;
+            }
         }
 
-        // Use overdue invoices for issue stats
-        const invRes = await fetch(`${API}/api/invoices`);
-        const { data: invoices } = await invRes.json();
-        document.getElementById('stat-invoices').textContent = invoices.length;
+        // ─── Load Issues ─── //
+        async function loadIssues() {
+            const el = document.getElementById('issues-list');
+            try {
+                const res = await fetch(`${API}/api/issues`);
+                const { data } = await res.json();
+                document.getElementById('stat-issues').textContent = data.length;
+                document.getElementById('issue-count').textContent = data.length;
 
-        // Simple issues display
-        el.innerHTML = `<p style="color:#94a3b8; font-size:0.85rem;">Run "Analyse" on a supplier to see issues in the context results.</p>`;
-        document.getElementById('stat-issues').textContent = '—';
-    } catch(e) {
-        el.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
-    }
-}
+                if (!data.length) {
+                    el.innerHTML = '<div class="empty-state"><div class="icon">✅</div>No open issues.</div>';
+                    return;
+                }
 
-// ─── Analyse Supplier (Context Retrieval) ─── //
-async function analyseSupplier(id) {
-    const el = document.getElementById('context-result');
-    el.innerHTML = '<div class="loading"><div class="spinner"></div>Running retrieval pipeline...</div>';
+                let html = '<table><thead><tr><th>Sev</th><th>Description</th><th>Supplier</th></tr></thead><tbody>';
+                for (const i of data.slice(0, 8)) {
+                    html += `<tr>
+                <td><span class="sev-dot sev-${i.severity}">${i.severity}</span></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.description}</td>
+                <td style="font-size:0.75rem;color:var(--text-muted)">${i.supplier_name || '—'}</td>
+            </tr>`;
+                }
+                html += '</tbody></table>';
+                el.innerHTML = html;
+            } catch (e) {
+                el.innerHTML = `<div class="empty-state" style="color:var(--danger)">⚠️ ${e.message}</div>`;
+            }
+        }
 
-    try {
-        const res = await fetch(`${API}/api/suppliers/${id}/context?keywords=quality,defective,overdue,invoice,payment`);
-        const { data } = await res.json();
+        // ─── Load Invoices ─── //
+        async function loadInvoices() {
+            const el = document.getElementById('invoices-list');
+            try {
+                const res = await fetch(`${API}/api/invoices`);
+                const { data } = await res.json();
+                document.getElementById('stat-invoices').textContent = data.length;
+                document.getElementById('invoice-count').textContent = data.length;
 
-        let html = '';
+                if (!data.length) {
+                    el.innerHTML = '<div class="empty-state"><div class="icon">💰</div>No invoices yet.</div>';
+                    return;
+                }
 
-        // Decision badge
-        const isFlagged = data.flag;
-        html += `<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
-            <span class="badge ${isFlagged ? 'badge-danger' : 'badge-success'}" style="font-size:0.9rem;padding:0.4rem 1rem;">
+                let html = '<table><thead><tr><th>Amount</th><th>Status</th><th>Due</th></tr></thead><tbody>';
+                for (const inv of data.slice(0, 8)) {
+                    const statusClass = inv.payment_status === 'paid' ? 'badge-success' :
+                        inv.payment_status === 'overdue' ? 'badge-danger' : 'badge-warning';
+                    const amount = parseFloat(inv.amount).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+                    const due = inv.due_date ? new Date(inv.due_date).toLocaleDateString() : '—';
+                    html += `<tr>
+                <td><strong>${amount}</strong></td>
+                <td><span class="badge ${statusClass}">${inv.payment_status}</span></td>
+                <td style="font-size:0.75rem;color:var(--text-muted)">${due}</td>
+            </tr>`;
+                }
+                html += '</tbody></table>';
+                el.innerHTML = html;
+            } catch (e) {
+                el.innerHTML = `<div class="empty-state" style="color:var(--danger)">⚠️ ${e.message}</div>`;
+            }
+        }
+
+        // ─── Load Lifecycle ─── //
+        function loadLifecycle() {
+            const days = [0, 30, 90, 180, 365, 730];
+            const ids = ['lc-0', 'lc-30', 'lc-90', 'lc-180', 'lc-365', 'lc-730'];
+            days.forEach((d, idx) => {
+                const score = Math.exp(-0.01 * d);
+                const el = document.getElementById(ids[idx]);
+                if (el) {
+                    el.innerHTML = `<div class="score-bar">
+                <div class="track" style="max-width:60px"><div class="fill fill-t" style="width:${score * 100}%"></div></div>
+                <span class="score-val">${score.toFixed(4)}</span>
+            </div>`;
+                }
+            });
+        }
+
+        // ─── Analyse Supplier ─── //
+        async function analyseSupplier(id, name) {
+            const el = document.getElementById('context-result');
+            el.innerHTML = '<div class="loading"><div class="spinner"></div>Running retrieval pipeline...</div>';
+
+            try {
+                const res = await fetch(`${API}/api/suppliers/${id}/context?keywords=quality,defective,overdue,invoice,payment,late,delivery`);
+                const { data } = await res.json();
+                const isFlagged = data.flag;
+                if (isFlagged) flaggedSuppliers.add(id); else flaggedSuppliers.delete(id);
+                document.getElementById('stat-flagged').textContent = flaggedSuppliers.size;
+
+                let html = '';
+
+                // ── Decision Header ──
+                html += `<div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;flex-wrap:wrap;">
+            <span class="badge badge-lg ${isFlagged ? 'badge-danger' : 'badge-success'}">
                 ${isFlagged ? '🚨 FLAGGED' : '✅ CLEAR'}
             </span>
-            <span style="color:#94a3b8;font-size:0.85rem;">
-                ${data.supplier?.name || 'Unknown'} — ${data.summary?.total_issues || 0} issues, ${data.summary?.total_invoices || 0} invoices
+            <span style="font-weight:600;color:var(--text-primary)">${data.supplier?.name || name}</span>
+            <span style="color:var(--text-muted);font-size:0.78rem;">
+                ${data.summary?.total_issues || 0} issues · ${data.summary?.total_invoices || 0} invoices · ${data.summary?.memories_scored || 0} scored
             </span>
         </div>`;
 
-        // Reasons
-        if (data.reasons?.length) {
-            html += '<ul class="reasons">';
-            data.reasons.forEach(r => html += `<li>⚠️ ${r}</li>`);
-            html += '</ul>';
-        } else {
-            html += '<ul class="reasons clear"><li>✅ No significant risk factors detected</li></ul>';
-        }
+                // ── Reasons ──
+                if (data.reasons?.length) {
+                    html += '<div class="reason-list">';
+                    data.reasons.forEach((r, i) =>
+                        html += `<div class="reason-item danger" style="animation-delay:${i * 0.08}s">⚠️ ${r}</div>`
+                    );
+                    html += '</div>';
+                } else {
+                    html += '<div class="reason-list"><div class="reason-item success">✅ No significant risk factors detected. All indicators normal.</div></div>';
+                }
 
-        // Trend info
-        if (data.trendInfo) {
-            const t = data.trendInfo;
-            const arrowClass = t.trend === 'worsening' ? 'trend-up' : t.trend === 'improving' ? 'trend-down' : 'trend-flat';
-            const arrowIcon = t.trend === 'worsening' ? '📈' : t.trend === 'improving' ? '📉' : '📊';
-            html += `<div style="margin:0.8rem 0; padding:0.6rem 1rem; background:rgba(15,23,42,0.5); border-radius:10px; font-size:0.82rem;">
-                <span class="${arrowClass}" style="font-weight:600;">${arrowIcon} Trend: ${t.trend.toUpperCase()}</span>
-                <span style="color:#64748b; margin-left:1rem;">Recent avg: ${parseFloat(t.recentAvg).toFixed(2)} | Older avg: ${parseFloat(t.olderAvg).toFixed(2)} | Weighted: ${parseFloat(t.weightedSeverity).toFixed(2)}</span>
+                // ── Trend ──
+                if (data.trendInfo) {
+                    const t = data.trendInfo;
+                    const tClass = t.trend === 'worsening' ? 'trend-worsening' : t.trend === 'improving' ? 'trend-improving' : 'trend-stable';
+                    const tIcon = t.trend === 'worsening' ? '📈' : t.trend === 'improving' ? '📉' : '📊';
+                    html += `<div class="trend-box ${tClass}">
+                <span class="trend-label">${tIcon} ${t.trend.toUpperCase()}</span>
+                <span class="trend-detail">Recent: ${parseFloat(t.recentAvg).toFixed(2)} · Older: ${parseFloat(t.olderAvg).toFixed(2)} · Weighted: ${parseFloat(t.weightedSeverity).toFixed(2)}</span>
             </div>`;
-        }
+                }
 
-        // Scored items table
-        if (data.items?.length) {
-            html += `<table style="margin-top:0.8rem;">
-                <thead><tr><th>#</th><th>Type</th><th>Description</th><th>Temporal</th><th>Relational</th><th>Semantic</th><th>Final</th></tr></thead><tbody>`;
-            data.items.forEach((item, idx) => {
-                const s = item.scores || {};
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><span class="badge badge-info">${(item.record_type || '?').toUpperCase()}</span></td>
-                    <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.description || '—'}</td>
-                    <td>${scoreBar(s.temporal, 'fill-temp')}</td>
-                    <td>${scoreBar(s.relational, 'fill-rel')}</td>
-                    <td>${scoreBar(s.semantic, 'fill-sem')}</td>
-                    <td>${scoreBar(s.finalScore, 'fill-final')}</td>
+                // ── Scored Items ──
+                if (data.items?.length) {
+                    html += `<table style="margin-top:0.6rem;">
+                <thead><tr><th>#</th><th>Type</th><th>Description</th><th>Temporal</th><th>Relational</th><th>Semantic</th><th>Final Score</th></tr></thead><tbody>`;
+                    data.items.forEach((item, idx) => {
+                        const s = item.scores || {};
+                        html += `<tr>
+                    <td style="color:var(--text-muted);font-weight:600">${idx + 1}</td>
+                    <td><span class="badge ${item.record_type === 'issue' ? 'badge-warning' : 'badge-info'}">${(item.record_type || '?').toUpperCase()}</span></td>
+                    <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${item.description || '—'}</td>
+                    <td>${sb(s.temporal, 'fill-t')}</td>
+                    <td>${sb(s.relational, 'fill-r')}</td>
+                    <td>${sb(s.semantic, 'fill-s')}</td>
+                    <td>${sb(s.finalScore, 'fill-f')}</td>
                 </tr>`;
-            });
-            html += '</tbody></table>';
+                    });
+                    html += '</tbody></table>';
+                }
+
+                el.innerHTML = html;
+                showToast(isFlagged ? `${name} is FLAGGED` : `${name} is CLEAR`, isFlagged ? 'error' : 'success');
+            } catch (e) {
+                el.innerHTML = `<div class="empty-state" style="color:var(--danger)">❌ ${e.message}<br><small>Make sure server is running.</small></div>`;
+            }
         }
 
-        // Update flagged count
-        document.getElementById('stat-flagged').textContent = isFlagged ? '1' : '0';
+        // Score bar helper
+        function sb(val, cls) {
+            const v = parseFloat(val || 0);
+            return `<div class="score-bar"><div class="track"><div class="fill ${cls}" style="width:${Math.round(v * 100)}%"></div></div><span class="score-val">${v.toFixed(2)}</span></div>`;
+        }
 
-        el.innerHTML = html;
-    } catch(e) {
-        el.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
-    }
-}
+        // ─── Seed Data ─── //
+        async function seedData() {
+            const btn = document.getElementById('btn-seed');
+            btn.disabled = true; btn.textContent = '⏳ Seeding...';
+            setStatus('Seeding demo data...');
 
-// ─── Score Bar Helper ─── //
-function scoreBar(value, fillClass) {
-    const v = parseFloat(value || 0);
-    const pct = Math.round(v * 100);
-    return `<div class="score-bar">
-        <div class="bar"><div class="fill ${fillClass}" style="width:${pct}%"></div></div>
-        <span style="font-size:0.75rem;color:#94a3b8;min-width:35px;">${v.toFixed(2)}</span>
-    </div>`;
-}
+            try {
+                // Create suppliers
+                const s1 = await (await fetch(`${API}/api/suppliers`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: 'Acme Manufacturing Co.', industry: 'Manufacturing', rating: 0.35, contact: 'john@acme.com' })
+                })).json();
 
-// ─── Seed Demo Data ─── //
-async function seedData() {
-    const el = document.getElementById('context-result');
-    el.innerHTML = '<div class="loading"><div class="spinner"></div>Seeding demo data...</div>';
+                const s2 = await (await fetch(`${API}/api/suppliers`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: 'Globex Electronics', industry: 'Electronics', rating: 0.85, contact: 'jane@globex.com' })
+                })).json();
 
-    try {
-        // Create suppliers
-        const s1 = await (await fetch(`${API}/api/suppliers`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name: 'Acme Manufacturing Co.', industry: 'Manufacturing', rating: 0.35, contact: 'john@acme.com' })
-        })).json();
+                const s3 = await (await fetch(`${API}/api/suppliers`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: 'Initech Solutions', industry: 'Software', rating: 0.62, contact: 'mike@initech.com' })
+                })).json();
 
-        const s2 = await (await fetch(`${API}/api/suppliers`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name: 'Globex Electronics', industry: 'Electronics', rating: 0.85, contact: 'jane@globex.com' })
-        })).json();
+                const acmeId = s1.data.id, globexId = s2.data.id, initechId = s3.data.id;
 
-        const acmeId = s1.data.id;
-        const globexId = s2.data.id;
+                // Create issues
+                const issues = [
+                    { supplier_id: acmeId, description: 'Defective batch of steel components — 15% failure rate', severity: 4 },
+                    { supplier_id: acmeId, description: 'Late delivery — shipment arrived 3 weeks past due', severity: 3 },
+                    { supplier_id: acmeId, description: 'Quality degradation in summer batches — material softening', severity: 5 },
+                    { supplier_id: acmeId, description: 'Invoice discrepancy — charged for undelivered items', severity: 3 },
+                    { supplier_id: initechId, description: 'API uptime dropped below SLA for 2 hours', severity: 2 },
+                    { supplier_id: globexId, description: 'Minor packaging damage on one shipment — cosmetic only', severity: 1 },
+                ];
+                for (const iss of issues) {
+                    await fetch(`${API}/api/issues`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(iss)
+                    });
+                }
 
-        // Create issues for Acme
-        const issues = [
-            { supplier_id: acmeId, description: 'Defective batch of steel components — 15% failure rate', severity: 4, status: 'open' },
-            { supplier_id: acmeId, description: 'Late delivery — shipment arrived 3 weeks past due date', severity: 3, status: 'resolved' },
-            { supplier_id: acmeId, description: 'Quality degradation in summer batches', severity: 5, status: 'open' },
-            { supplier_id: acmeId, description: 'Invoice discrepancy — charged for undelivered items', severity: 3, status: 'resolved' },
-        ];
+                // Create invoices
+                const invoices = [
+                    { supplier_id: acmeId, amount: 12500, payment_status: 'paid', invoice_date: '2026-01-10', description: 'Q4 steel components' },
+                    { supplier_id: acmeId, amount: 8900, payment_status: 'pending', invoice_date: '2026-01-15', due_date: '2026-02-15', description: 'January batch — disputed quality' },
+                    { supplier_id: acmeId, amount: 15000, payment_status: 'pending', invoice_date: '2026-02-26', due_date: '2026-03-28', description: 'February batch — new order' },
+                    { supplier_id: globexId, amount: 25000, payment_status: 'paid', invoice_date: '2026-02-01', description: 'Premium electronics batch' },
+                    { supplier_id: globexId, amount: 30000, payment_status: 'pending', invoice_date: '2026-02-20', due_date: '2026-03-20', description: 'March electronics order' },
+                    { supplier_id: initechId, amount: 4500, payment_status: 'paid', invoice_date: '2026-02-10', description: 'Monthly SaaS license' },
+                ];
+                for (const inv of invoices) {
+                    await fetch(`${API}/api/invoices`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(inv)
+                    });
+                }
 
-        // We need an issues route — let's use direct approach
-        // For now, create invoices which auto-trigger retrieval
-        await fetch(`${API}/api/invoices`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ supplier_id: acmeId, amount: 12500, payment_status: 'paid', invoice_date: '2026-01-10', description: 'Q4 steel components' })
-        });
-        await fetch(`${API}/api/invoices`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ supplier_id: acmeId, amount: 8900, payment_status: 'pending', invoice_date: '2026-01-15', due_date: '2026-02-15', description: 'January batch — disputed quality' })
-        });
-        await fetch(`${API}/api/invoices`, {
-            method: 'POST', headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ supplier_id: globexId, amount: 25000, payment_status: 'paid', invoice_date: '2026-02-01', description: 'Premium electronics batch' })
-        });
+                showToast('✅ Demo data seeded: 3 suppliers, 6 issues, 6 invoices');
+                await loadDashboard();
+            } catch (e) {
+                showToast('❌ Error: ' + e.message, 'error');
+            } finally {
+                btn.disabled = false; btn.textContent = '🌱 Seed Demo Data';
+            }
+        }
 
-        el.innerHTML = '<p style="color:#4ade80;font-size:0.85rem;">✅ Demo data seeded! Click "Refresh Dashboard" to see the data, then "Analyse" a supplier.</p>';
-        await loadDashboard();
-    } catch(e) {
-        el.innerHTML = `<p style="color:#f87171">Error seeding: ${e.message}</p>`;
-    }
-}
+        // ─── Clear Data ─── //
+        async function clearData() {
+            if (!confirm('Clear all data from the database?')) return;
+            try {
+                // We'll call a special endpoint or just reload
+                const tables = ['issues', 'invoices', 'suppliers'];
+                for (const t of tables) {
+                    await fetch(`${API}/api/${t}`, { method: 'DELETE' }).catch(() => { });
+                }
+                flaggedSuppliers.clear();
+                showToast('🗑 Database cleared');
+                await loadDashboard();
+            } catch (e) {
+                showToast('Note: Clear may require manual reset', 'error');
+                await loadDashboard();
+            }
+        }
 
-// ─── Issues Route (add to server) ─── //
-// We need an issues API route for the seed function
-
-// ─── Init ─── //
-document.addEventListener('DOMContentLoaded', loadDashboard);
-</script>
-
+        // ─── Init ─── //
+        document.addEventListener('DOMContentLoaded', loadDashboard);
+    </script>
 </body>
+
 </html>

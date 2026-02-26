@@ -23,8 +23,16 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const issues = await IssueModel.getOpenIssues();
-        res.json({ success: true, data: issues });
+        // Join with suppliers to get name for dashboard display
+        const { query: dbQuery } = require('../db');
+        const result = await dbQuery(`
+            SELECT i.*, s.name as supplier_name
+            FROM issues i
+            LEFT JOIN suppliers s ON i.supplier_id = s.id
+            WHERE i.status = 'open'
+            ORDER BY i.severity DESC, i.created_at DESC
+        `);
+        res.json({ success: true, data: result.rows });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
