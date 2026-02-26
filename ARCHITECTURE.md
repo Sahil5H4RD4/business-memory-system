@@ -1,64 +1,224 @@
-# Architecture Details
+# Architecture — Business Context Memory Engine
 
-For the high-level system overview and architecture diagram, please refer to [README.md](README.md).
+This document provides the technical architecture details, data flow diagrams, scoring mathematics, and design rationale for the Business Context Memory Engine.
 
-This document outlines the specific reasoning behind component choices, the mathematical models for retrieval scoring, and the logic for memory lifecycle management.
+## System Architecture Diagram
 
-## Component Reasoning
+```mermaid
+graph TD
+    subgraph API_Layer["API Layer (Express)"]
+        SR["/api/suppliers"] --> SM["Supplier Routes"]
+        IR["/api/invoices"] --> IM["Invoice Routes"]
+    end
 
-### 1. Immediate Memory (Short-term)
-- **Purpose**: Holds the current conversation context and recently accessed information.
-- **Reasoning**: LLMs have limited context windows. We need a scratchpad for immediate relevance (e.g., "the invoice you just mentioned").
-- **Implementation**: In-memory cache (Redis) or ephemeral vector store.
+    subgraph Models["Data Models"]
+        SM --> S["supplier.model"]
+        IM --> I["invoice.model"]
+        ISS["issue.model"]
+    end
 
-### 2. Episodic Memory (Event-based)
-- **Purpose**: Stores sequences of events, interactions, and modifications.
-- **Reasoning**: Business logic relies on "who did what and when". We need an audit trail of actions (e.g., "User X updated Invoice Y on Date Z").
-- **Implementation**: Time-series database or Append-only log with vector indices.
+    subgraph Engines["Engine Layer"]
+        LE["Lifecycle Engine<br/>Time Decay"]
+        RE["Relevance Engine<br/>Weighted Scoring"]
+        RTE["Retrieval Engine<br/>Context Pipeline"]
+        CE["Conflict Engine<br/>Trend Detection"]
+        EE["Explainability Engine<br/>Decision Reasoning"]
+    end
 
-### 3. Semantic Memory (Structured Facts)
-- **Purpose**: detailed knowledge graph of entities and their relationships.
-- **Reasoning**: Raw text is ambiguous. We need structured facts (e.g., "Client A is a VIP", "Product B belongs to Category C").
-- **Implementation**: Graph Database (Neo4j) or Relational DB (PostgreSQL).
+    subgraph DB["PostgreSQL"]
+        T1["suppliers"]
+        T2["invoices"]
+        T3["issues"]
+    end
 
-### 4. Temporal Memory (Time-series Trends)
-- **Purpose**: Tracks metrics and trends over time.
-- **Reasoning**: Business decisions often need historical context (e.g., "Sales for Q1 are down compared to last year").
-- **Implementation**: Time-series DB (InfluxDB) or columnar store.
+    S --> T1
+    I --> T2
+    ISS --> T3
 
-### 5. Experiential Pattern Engine
-- **Purpose**: Learns from historical data to identifying recurring issues or successful workflows.
-- **Reasoning**: AI should get "smarter" over time, not just store more data. It needs to generalize patterns (e.g., "Tickets from Client X usually involve Payment issues").
+    IM -->|"Submit Invoice"| RTE
+    SM -->|"Context Query"| RTE
 
-### 6. Memory Lifecycle Manager
-- **Purpose**: Manages the "health" of the memory, preventing bloat.
-- **Reasoning**: Storing everything forever is costly and adds noise. We need to forget irrelevant details while keeping critical facts.
-- **Logic**:
-    - **Decay**: Memories lose `relevance_score` over time unless accessed.
-    - **Promotion**: Frequently accessed immediate memories become episodic/semantic.
-    - **Archival**: Low-score memories move to cold storage.
+    RTE --> S
+    RTE --> I
+    RTE --> ISS
+    RTE --> RE
+    RE --> LE
+    RTE --> CE
+    RTE --> EE
+```
 
-## Retrieval & Scoring Math
+## Data Flow
 
-The `Retrieval Engine` uses a composite score to rank memories for a given query $q$.
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as Express API
+    participant RT as Retrieval Engine
+    participant RL as Relevance Engine
+    participant LC as Lifecycle Engine
+    participant CF as Conflict Engine
+    participant EX as Explainability Engine
+    participant DB as PostgreSQL
 
-$$ Score(m, q) = w_1 \cdot Sim(m, q) + w_2 \cdot Recency(m) + w_3 \cdot Importance(m) $$
+    Client->>API: POST /api/invoices
+    API->>DB: Insert invoice
+    API->>RT: retrieveContext(supplierId)
+    RT->>DB: Fetch supplier
+    RT->>DB: Fetch recent issues
+    RT->>DB: Fetch invoices
+    RT->>RL: scoreAndRank(memories)
+    RL->>LC: calculateTemporalScore()
+    RL-->>RT: Scored items
+    RT->>CF: resolveConflicts(items)
+    CF->>DB: getIssueTrend()
+    CF-->>RT: Adjusted items
+    RT->>EX: generateExplanation()
+    EX-->>RT: Explanation
+    RT-->>API: Context result
+    API-->>Client: JSON response
+```
 
-Where:
-- $m$: A memory item.
-- $q$: The query vector.
-- $Sim(m, q)$ : Cosine similarity between memory vector and query vector.
-- $Recency(m) = \frac{1}{1 + \lambda \cdot (t_{now} - t_{m})} $ : Time decay function. Memories fade unless reinforced.
-- $Importance(m)$ : A static or dynamic weight assigned to the memory type (e.g., a "Critical Error" log has high importance).
-- $w_1, w_2, w_3$ : Tunable weights (e.g., $0.6, 0.2, 0.2$).
+## Memory Hierarchy
 
-## Memory Lifecycle Logic
+```
+┌─────────────────────────────────────────────┐
+│              Active Memory Pool              │
+│                                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
+│  │ Suppliers │  │ Invoices │  │  Issues  │  │
+│  │  (rated)  │  │ (tracked)│  │(severity)│  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
+│       │              │              │        │
+│       └──────── FK ──┴──── FK ──────┘        │
+│                                              │
+├──────────────────────────────────────────────┤
+│           Temporal Decay Layer               │
+│  Score = e^(-0.01 × daysOld) × ageWeight    │
+│  <6mo: 1.0 | 6-24mo: 0.5 | >24mo: 0.0     │
+├──────────────────────────────────────────────┤
+│           Relevance Scoring                  │
+│  Final = 0.4T + 0.3R + 0.3S                │
+├──────────────────────────────────────────────┤
+│           Conflict Resolution                │
+│  Worsening: ×1.3 | Improving: ×0.7         │
+├──────────────────────────────────────────────┤
+│           Archive (>2 years)                 │
+└──────────────────────────────────────────────┘
+```
 
-1. **Ingestion**: New memory $m$ created at $t_0$ with $Importance(m)$.
-2. **Access**: Every time $m$ is retrieved, update:
-3.    - $LastAccess(m) = t_{now}$
-4.    - $AccessCount(m) \leftarrow AccessCount(m) + 1$
-5. **Decay (Periodic Job)**:
-6.    - $CurrentScore(m) = Importance(m) \cdot e^{-\alpha (t_{now} - LastAccess(m))}$
-7.    - If $CurrentScore(m) < Threshold_{archive}$, move to **Archive**.
-8.    - If $AccessCount(m) > Threshold_{consolidate}$, trigger **Pattern Engine** to generalize.
+## Retrieval Pipeline Detail
+
+The retrieval engine follows a 5-step pipeline:
+
+### Step 1: Candidate Gathering
+```sql
+-- Fetch supplier issues (look-back window)
+SELECT * FROM issues
+WHERE supplier_id = $1
+  AND created_at >= CURRENT_TIMESTAMP - INTERVAL '120 days'
+ORDER BY created_at DESC;
+
+-- Fetch supplier invoices
+SELECT * FROM invoices
+WHERE supplier_id = $1
+ORDER BY created_at DESC;
+```
+
+### Step 2: Scoring
+
+For each memory M:
+```
+temporal   = e^(-0.01 × age_in_days)
+relational = 1.0 if same supplier, 0.6 if same industry, 0.2 otherwise
+semantic   = keyword_hits / total_keywords
+finalScore = 0.4 × temporal + 0.3 × relational + 0.3 × semantic
+```
+
+### Step 3: Conflict Resolution
+
+```
+recentAvgSeverity = avg(last 3 issues severity)
+olderAvgSeverity  = avg(older issues severity)
+
+if recentAvg > olderAvg + 0.3 → "worsening" → multiply scores × 1.3
+if recentAvg < olderAvg - 0.3 → "improving" → multiply scores × 0.7
+else                          → "stable"    → no adjustment
+```
+
+### Step 4: Ranking
+
+Sort all scored memories by `finalScore` descending. Return top 5.
+
+### Step 5: Explanation
+
+Generate structured JSON with:
+- Flag decision (FLAGGED / CLEAR)
+- Human-readable narrative
+- Per-item scoring breakdown
+- Trend analysis summary
+
+## Database Schema
+
+```mermaid
+erDiagram
+    SUPPLIERS ||--o{ INVOICES : "has"
+    SUPPLIERS ||--o{ ISSUES : "has"
+
+    SUPPLIERS {
+        int id PK
+        varchar name
+        varchar industry
+        numeric rating
+        varchar contact
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    INVOICES {
+        int id PK
+        int supplier_id FK
+        numeric amount
+        date invoice_date
+        date due_date
+        varchar payment_status
+        text description
+        timestamp created_at
+    }
+
+    ISSUES {
+        int id PK
+        int supplier_id FK
+        text description
+        int severity
+        varchar status
+        text resolution
+        timestamp created_at
+        timestamp resolved_at
+    }
+```
+
+## Performance Indexes
+
+| Index | Table | Column(s) | Purpose |
+|-------|-------|-----------|---------|
+| `idx_suppliers_industry` | suppliers | industry | Industry filtering |
+| `idx_invoices_supplier_id` | invoices | supplier_id | Supplier lookups |
+| `idx_invoices_due_date` | invoices | due_date | Overdue detection |
+| `idx_invoices_payment_status` | invoices | payment_status | Status filtering |
+| `idx_invoices_created_at` | invoices | created_at | Temporal queries |
+| `idx_issues_supplier_id` | issues | supplier_id | Supplier lookups |
+| `idx_issues_created_at` | issues | created_at | Temporal queries |
+| `idx_issues_severity` | issues | severity | Severity filtering |
+| `idx_issues_status` | issues | status | Status filtering |
+| `idx_issues_supplier_created` | issues | (supplier_id, created_at) | Composite — most used query |
+
+## Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| PostgreSQL over NoSQL | Relational data with strong FK constraints needed for entity linking |
+| Express.js | Lightweight, industry-standard REST framework |
+| No ORM (raw SQL) | Full control over queries, easier to optimize and index |
+| Exponential decay | Natural decay curve — recent data stays relevant longest |
+| Three-score composite | Balances recency, relationships, and content relevance |
+| Keyword matching over LLM | Lightweight, deterministic, no API costs |

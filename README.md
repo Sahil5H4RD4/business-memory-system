@@ -1,132 +1,212 @@
-# AI Context and Memory Management System
+# Business Context Memory Engine
 
-A robust memory management layer designed for AI agents in business environments. This system orchestrates Immediate, Episodic, Semantic, and Temporal memory types to ensure AI agents maintain relevant context for decision-making.
+> An intelligent memory management system for business AI agents — built with Node.js, Express, and PostgreSQL. Scores, ranks, and retrieves the most relevant business context using temporal decay, relational proximity, and semantic similarity.
 
-## Features
+## 🧠 Problem Statement
 
--   **Multi-Modal Memory Architecture**:
-    -   **Immediate Memory**: Short-term working context (e.g., current conversation).
-    -   **Episodic Memory**: Event-based logs/audit trails (e.g., "User X updated Invoice Y").
-    -   **Semantic Memory**: Structured knowledge graph (e.g., "Client A is VIP").
-    -   **Temporal Memory**: Time-series trends (e.g., server latency metrics).
--   **Lifecycle Management**: Automated decay, consolidation, and archival of memories to prevent bloat.
--   **Smart Retrieval**: Context retrieval based on Vector Similarity, Recency, and Importance scoring.
--   **Multi-Agent Context**: Shared context broadcasting for collaborative agent systems.
+AI systems in business environments process a constant stream of events — invoices, supplier issues, customer interactions. Without structured memory management, critical context gets lost and decision quality degrades over time.
 
-## Architecture
+This engine solves that by providing:
+- **Structured memory storage** with relational linking
+- **Intelligent retrieval** that surfaces the most relevant context
+- **Time decay** that naturally deprioritizes stale information
+- **Conflict resolution** that handles contradictory signals
+- **Explainable decisions** with full scoring breakdowns
 
-The system follows a layered architecture for processing, storing, and retrieving context. For detailed component reasoning and scoring math, see [ARCHITECTURE.md](ARCHITECTURE.md).
+## 🏗 Architecture
 
-```mermaid
-graph TD
-    %% Input Layer
-    subgraph Input_Layer [Input Layer]
-        In1[Invoice / Document] --> |Ingest| API
-        In2[Support Ticket] --> |Ingest| API
-        In3[User Query] --> |Ingest| API
-    end
-
-    %% API Gateway
-    API[API Gateway] --> |Route| P[Processing Engine]
-    
-    %% Processing & Routing
-    subgraph Processing_Layer [Processing & Routing]
-        P --> |Extract Entities| NER[Named Entity Recognition]
-        P --> |Analyze Sentiment| SA[Sentiment Analysis]
-        P --> |Vectorize| EMB[Embedding Model]
-    end
-
-    %% Memory Stores
-    subgraph Memory_Stores [Memory Stores]
-        direction TB
-        IM[Immediate Memory<br/>(Short-term/Working)]
-        EM[Episodic Memory<br/>(Event-based Logs)]
-        SM[Semantic Memory<br/>(Structured Facts/KG)]
-        TM[Temporal Memory<br/>(Time-series Trends)]
-    end
-
-    %% Data Flow to Memory
-    NER --> SM
-    NER --> EM
-    SA --> EM
-    EMB --> IM
-    EMB --> EM
-
-    %% Lifecycle Management
-    subgraph Lifecycle_Management [Lifecycle Management]
-        MLM[Memory Lifecycle Manager]
-        ARC[Archive Storage<br/>(Cold Store)]
-        
-        MLM --> |Monitor Access| IM
-        MLM --> |Consolidate| EM
-        MLM --> |Prune/Archive| ARC
-        
-        IM -.-> |Promote if recurring| EM
-        EM -.-> |Abstract patterns| SM
-        EM -.-> |Move stale events| ARC
-    end
-
-    %% Start of Retrieval Flow
-    subgraph Retrieval_System [Retrieval & Context]
-        Q[Query / Context Request] --> RE[Retrieval Engine]
-        
-        RE --> |Fetch Relevant| IM
-        RE --> |Search Similar| EM
-        RE --> |Query Facts| SM
-        RE --> |Get Trends| TM
-        
-        RE --> SC[Scoring Module]
-        
-        SC --> |Rank & Filter| RC[Ranked Context]
-        
-        RC --> MAC[Multi-Agent Shared Context]
-    end
-
-    %% Experiential Pattern Engine
-    subgraph Pattern_Engine [Experiential Pattern Engine]
-        EPE[Pattern Recognizer]
-        
-        EM --> |Feed Events| EPE
-        TM --> |Feed Trends| EPE
-        EPE --> |Update Rules| SM
-    end
+```
+┌──────────────────────────────────────────────────────────┐
+│                     API Layer (Express)                   │
+│  POST/GET /api/suppliers    POST/GET /api/invoices        │
+└─────────────┬────────────────────────┬───────────────────┘
+              │                        │
+              ▼                        ▼
+┌──────────────────────┐  ┌─────────────────────────────┐
+│    Models Layer      │  │      Engine Layer            │
+│  ┌────────────────┐  │  │  ┌───────────────────────┐  │
+│  │ supplier.model │  │  │  │ lifecycle.engine      │  │
+│  │ invoice.model  │  │  │  │ relevance.engine      │  │
+│  │ issue.model    │  │  │  │ retrieval.engine      │  │
+│  └────────────────┘  │  │  │ conflict.engine       │  │
+│                      │  │  │ explainability.engine  │  │
+│                      │  │  └───────────────────────┘  │
+└──────────┬───────────┘  └──────────────┬──────────────┘
+           │                             │
+           ▼                             ▼
+┌──────────────────────────────────────────────────────────┐
+│              PostgreSQL (context_memory)                  │
+│  ┌────────────┐  ┌───────────┐  ┌──────────┐            │
+│  │ suppliers  │  │ invoices  │  │ issues   │            │
+│  └────────────┘  └───────────┘  └──────────┘            │
+│  + 10 performance indexes                                │
+└──────────────────────────────────────────────────────────┘
 ```
 
-## Setup & Usage
+## 📊 Memory Types
+
+| Type | Description | Key Fields |
+|------|-------------|------------|
+| **Supplier** | Vendor profiles | name, industry, rating, contact |
+| **Invoice** | Payment records | amount, due_date, payment_status |
+| **Issue** | Quality/delivery problems | severity (1-5), status, resolution |
+
+## 🔬 Retrieval Logic
+
+When a new invoice arrives, the system runs a **5-step pipeline**:
+
+1. **Fetch** — Get the supplier profile
+2. **Gather** — Collect all related issues and invoices
+3. **Score** — Apply the relevance formula to each memory
+4. **Rank** — Sort by composite score, take top 5
+5. **Explain** — Generate human-readable reasoning
+
+### Scoring Formula
+
+```
+Final Score = 0.4 × Temporal + 0.3 × Relational + 0.3 × Semantic
+```
+
+| Component | Method | Range |
+|-----------|--------|-------|
+| **Temporal** | `e^(-0.01 × daysOld)` | (0, 1] |
+| **Relational** | Same supplier=1.0, Same industry=0.6, Different=0.2 | [0.2, 1.0] |
+| **Semantic** | Keyword match ratio | [0, 1] |
+
+## ⏳ Lifecycle Rules
+
+| Age | Weight | Action |
+|-----|--------|--------|
+| < 6 months | 1.0 | High priority |
+| 6–24 months | 0.5 | Down-weighted |
+| > 2 years | 0.0 | Auto-archive |
+
+## ⚔️ Conflict Resolution
+
+When contradictory signals exist (old negative + new positive):
+
+- **Worsening trend** → Boost scores by **1.3×** (emphasize risk)
+- **Improving trend** → Dampen scores by **0.7×** (reduce old negatives)
+- **Stable** → No adjustment
+
+Trends are detected by comparing average severity of the 3 most recent issues against older ones.
+
+## 📈 Scaling Strategy
+
+- **10 PostgreSQL indexes** on frequently queried columns
+- **Composite index** on `(supplier_id, created_at DESC)` for the most common query
+- **Paginated queries** with LIMIT/OFFSET helpers
+- **Batch retrieval** for bulk operations
+- **Performance logger** that times every operation
+
+## 🔒 Privacy & Security
+
+- Parameterized queries throughout (SQL injection prevention)
+- Environment-based configuration (`.env` not committed)
+- Role-based access ready (extensible permission model)
+
+## 🚀 Setup & Usage
 
 ### Prerequisites
-- Python 3.8+
+- Node.js 18+
+- PostgreSQL 14+
 
 ### Installation
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd business-memory-system
-   ```
-
-2. Install dependencies (currently standard library only):
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Running the Prototype
-Execute the main script to see the memory system in action:
 
 ```bash
-python3 -m src.main
+git clone https://github.com/Sahil5H4RD4/business-memory-system.git
+cd business-memory-system
+npm install
 ```
 
-This will run a simulation that:
-1.  Initializes memory stores.
-2.  Ingests sample data (Invoices, Semantic Facts).
-3.  Simulates a user query ("Status of INV-001").
-4.  Demonstrates retrieval ranking.
-5.  Simulates time passage and memory decay/archival.
+### Database Setup
 
-## Directory Structure
-- `src/`: Source code for memory modules.
-    - `memory_store.py`: Class definitions for memory types.
-    - `retrieval.py`: Scoring and retrieval logic.
-    - `lifecycle.py`: Management of memory decay and archival.
-    - `shared_context.py`: Inter-agent context sharing.
-    - `main.py`: Entry point for the prototype demonstration.
+```bash
+# Create database
+createdb context_memory
+
+# Run schema
+psql -d context_memory -f src/schema.sql
+
+# Create indexes (optional, for performance)
+psql -d context_memory -f src/indexes.sql
+```
+
+### Configuration
+
+Create a `.env` file:
+```env
+PORT=3000
+DB_USER=your_username
+DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=context_memory
+```
+
+### Running
+
+```bash
+npm start
+```
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/suppliers` | Create a supplier |
+| `GET` | `/api/suppliers` | List all suppliers |
+| `GET` | `/api/suppliers/:id` | Get supplier |
+| `GET` | `/api/suppliers/:id/summary` | Supplier with stats |
+| `GET` | `/api/suppliers/:id/context` | Run context retrieval |
+| `POST` | `/api/invoices` | Submit invoice (auto-retrieval) |
+| `GET` | `/api/invoices` | List all invoices |
+| `GET` | `/api/invoices/overdue` | Overdue invoices |
+| `PATCH` | `/api/invoices/:id/status` | Update payment status |
+
+### Example: Submit Invoice & Get Context
+
+```bash
+# Create a supplier
+curl -X POST http://localhost:3000/api/suppliers \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Acme Corp", "industry": "Manufacturing", "rating": 0.45}'
+
+# Submit an invoice (auto-triggers context retrieval)
+curl -X POST http://localhost:3000/api/invoices \
+  -H "Content-Type: application/json" \
+  -d '{"supplier_id": 1, "amount": 5000, "due_date": "2026-03-15"}'
+```
+
+## 📁 Project Structure
+
+```
+business-memory-system/
+├── package.json
+├── .env                          # Environment config (not committed)
+├── README.md
+├── ARCHITECTURE.md
+└── src/
+    ├── server.js                 # Express server entry point
+    ├── db.js                     # PostgreSQL connection pool
+    ├── schema.sql                # Database table definitions
+    ├── indexes.sql               # Performance indexes
+    ├── scalability.js            # Pagination & batch helpers
+    ├── models/
+    │   ├── supplier.model.js     # Supplier data access layer
+    │   ├── invoice.model.js      # Invoice data access layer
+    │   └── issue.model.js        # Issue data access layer
+    ├── engines/
+    │   ├── lifecycle.engine.js   # Time decay & age management
+    │   ├── relevance.engine.js   # Weighted relevance scoring
+    │   ├── retrieval.engine.js   # Context retrieval pipeline
+    │   ├── conflict.engine.js    # Trend detection & resolution
+    │   └── explainability.engine.js  # Decision reasoning output
+    └── routes/
+        ├── supplier.routes.js    # Supplier REST API
+        └── invoice.routes.js     # Invoice REST API
+```
+
+## 📜 License
+
+ISC
