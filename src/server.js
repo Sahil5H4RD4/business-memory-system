@@ -6,6 +6,7 @@
  */
 
 const express = require('express');
+const path = require('path');
 const dotenv = require('dotenv');
 
 // Load environment variables
@@ -19,6 +20,7 @@ const PORT = process.env.PORT || 3000;
 // ---------------------------------------------------------------------------
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Request logging
 app.use((req, res, next) => {
@@ -30,7 +32,7 @@ app.use((req, res, next) => {
 // Health Check
 // ---------------------------------------------------------------------------
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.json({
         name: 'Business Context Memory Engine',
         version: '1.0.0',
@@ -49,9 +51,11 @@ app.get('/health', (req, res) => {
 
 const supplierRoutes = require('./routes/supplier.routes');
 const invoiceRoutes = require('./routes/invoice.routes');
+const issueRoutes = require('./routes/issue.routes');
 
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/issues', issueRoutes);
 
 // ---------------------------------------------------------------------------
 // Database Initialization

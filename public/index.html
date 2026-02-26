@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Context Memory Engine — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ─── Reset & Base ─── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0b0f1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ─── Background Gradient ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 20%, rgba(6, 182, 212, 0.06) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+            z-index: -1;
+            animation: bgFloat 20s ease-in-out infinite;
+        }
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-2%, -1%); }
+        }
+
+        /* ─── Header ─── */
+        header {
+            padding: 1.5rem 2rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(11, 15, 26, 0.8);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        header h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #06b6d4, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+        header p { color: #64748b; font-size: 0.85rem; margin-top: 0.3rem; }
+
+        /* ─── Layout ─── */
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+        .grid-full { grid-column: 1 / -1; }
+
+        /* ─── Glass Card ─── */
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            padding: 1.2rem;
+            backdrop-filter: blur(12px);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+        .card h2 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* ─── Status Badge ─── */
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.25rem 0.7rem; border-radius: 999px; font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-success { background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .badge-warning { background: rgba(234, 179, 8, 0.15); color: #facc15; border: 1px solid rgba(234, 179, 8, 0.3); }
+        .badge-info { background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3); }
+
+        /* ─── Buttons ─── */
+        .btn {
+            padding: 0.6rem 1.2rem; border: none; border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: #fff;
+        }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); }
+        .btn-seed {
+            background: linear-gradient(135deg, #06b6d4, #0891b2);
+            color: #fff;
+        }
+        .btn-seed:hover { box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4); }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 8px; }
+
+        /* ─── Actions Bar ─── */
+        .actions { display: flex; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+
+        /* ─── Table ─── */
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th {
+            text-align: left; padding: 0.6rem 0.8rem; font-weight: 600;
+            color: #94a3b8; border-bottom: 1px solid rgba(255,255,255,0.08);
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        td {
+            padding: 0.6rem 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        tr:hover td { background: rgba(99, 102, 241, 0.04); }
+
+        /* ─── Score Bar ─── */
+        .score-bar {
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .score-bar .bar {
+            height: 6px; border-radius: 3px; flex: 1; max-width: 80px;
+            background: rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+        .score-bar .bar .fill {
+            height: 100%; border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .fill-temp { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+        .fill-rel { background: linear-gradient(90deg, #6366f1, #818cf8); }
+        .fill-sem { background: linear-gradient(90deg, #a78bfa, #c084fc); }
+        .fill-final { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+        /* ─── Reason List ─── */
+        .reasons { list-style: none; padding: 0; }
+        .reasons li {
+            padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; font-size: 0.82rem;
+            background: rgba(239, 68, 68, 0.05); border-left: 3px solid #f87171;
+            border-radius: 0 8px 8px 0; color: #fca5a5;
+        }
+        .reasons.clear li {
+            background: rgba(34, 197, 94, 0.05); border-left-color: #4ade80;
+            color: #86efac;
+        }
+
+        /* ─── Narrative ─── */
+        .narrative {
+            background: rgba(15, 23, 42, 0.6); border-radius: 10px;
+            padding: 1rem; font-size: 0.85rem; line-height: 1.6;
+            white-space: pre-line; color: #cbd5e1;
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        /* ─── Stats Row ─── */
+        .stats-row { display: flex; gap: 0.8rem; flex-wrap: wrap; }
+        .stat-item {
+            flex: 1; min-width: 120px; text-align: center;
+            background: rgba(15, 23, 42, 0.4); border-radius: 10px;
+            padding: 0.8rem;
+        }
+        .stat-item .value {
+            font-size: 1.5rem; font-weight: 700;
+            background: linear-gradient(135deg, #818cf8, #06b6d4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-item .label { font-size: 0.7rem; color: #64748b; margin-top: 0.2rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* ─── Loading ─── */
+        .loading {
+            text-align: center; padding: 2rem; color: #64748b;
+        }
+        .spinner {
+            width: 30px; height: 30px; border: 3px solid rgba(99, 102, 241, 0.2);
+            border-top-color: #6366f1; border-radius: 50%;
+            animation: spin 0.8s linear infinite; margin: 0 auto 0.5rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+            header h1 { font-size: 1.2rem; }
+        }
+
+        /* ─── Severity Colors ─── */
+        .sev-1 { color: #4ade80; }
+        .sev-2 { color: #86efac; }
+        .sev-3 { color: #facc15; }
+        .sev-4 { color: #fb923c; }
+        .sev-5 { color: #f87171; }
+
+        /* ─── Trend Arrow ─── */
+        .trend-up { color: #f87171; }
+        .trend-down { color: #4ade80; }
+        .trend-flat { color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🧠 Business Context Memory Engine</h1>
+    <p>Intelligent memory scoring, retrieval, and decision explainability</p>
+</header>
+
+<div class="container">
+    <!-- Actions -->
+    <div class="actions">
+        <button class="btn btn-seed" onclick="seedData()">🌱 Seed Demo Data</button>
+        <button class="btn btn-primary" onclick="loadDashboard()">🔄 Refresh Dashboard</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" id="stats-row">
+        <div class="stat-item"><div class="value" id="stat-suppliers">—</div><div class="label">Suppliers</div></div>
+        <div class="stat-item"><div class="value" id="stat-invoices">—</div><div class="label">Invoices</div></div>
+        <div class="stat-item"><div class="value" id="stat-issues">—</div><div class="label">Issues</div></div>
+        <div class="stat-item"><div class="value" id="stat-flagged">—</div><div class="label">Flagged</div></div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid" style="margin-top: 1.2rem;">
+
+        <!-- Suppliers -->
+        <div class="card">
+            <h2>📦 Suppliers</h2>
+            <div id="suppliers-list"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+        </div>
+
+        <!-- Issues -->
+        <div class="card">
+            <h2>⚠️ Recent Issues</h2>
+            <div id="issues-list"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+        </div>
+
+        <!-- Context Retrieval -->
+        <div class="card grid-full">
+            <h2>🔍 Context Retrieval — Select a Supplier</h2>
+            <div id="context-result">
+                <p style="color: #64748b; font-size: 0.85rem;">
+                    Click <strong>"Analyse"</strong> on any supplier to run the retrieval pipeline.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = '';
+
+// ─── Load Dashboard ─── //
+async function loadDashboard() {
+    await Promise.all([loadSuppliers(), loadIssues()]);
+}
+
+// ─── Load Suppliers ─── //
+async function loadSuppliers() {
+    const el = document.getElementById('suppliers-list');
+    try {
+        const res = await fetch(`${API}/api/suppliers`);
+        const { data } = await res.json();
+        document.getElementById('stat-suppliers').textContent = data.length;
+
+        if (!data.length) {
+            el.innerHTML = '<p style="color:#64748b; font-size:0.85rem;">No suppliers yet. Click "Seed Demo Data" to get started.</p>';
+            return;
+        }
+
+        let flaggedCount = 0;
+        let html = '<table><thead><tr><th>Name</th><th>Industry</th><th>Rating</th><th>Action</th></tr></thead><tbody>';
+        for (const s of data) {
+            const ratingColor = s.rating < 0.4 ? 'badge-danger' : s.rating < 0.7 ? 'badge-warning' : 'badge-success';
+            html += `<tr>
+                <td><strong>${s.name}</strong></td>
+                <td>${s.industry || '—'}</td>
+                <td><span class="badge ${ratingColor}">${parseFloat(s.rating).toFixed(2)}</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="analyseSupplier(${s.id})">Analyse</button></td>
+            </tr>`;
+        }
+        html += '</tbody></table>';
+        el.innerHTML = html;
+    } catch(e) {
+        el.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
+    }
+}
+
+// ─── Load Issues ─── //
+async function loadIssues() {
+    const el = document.getElementById('issues-list');
+    try {
+        const res = await fetch(`${API}/api/suppliers`);
+        const { data: suppliers } = await res.json();
+
+        let allIssues = [];
+        for (const s of suppliers) {
+            const iRes = await fetch(`${API}/api/suppliers/${s.id}`);
+            const iData = await iRes.json();
+            // Get issues via context endpoint for count
+        }
+
+        // Use overdue invoices for issue stats
+        const invRes = await fetch(`${API}/api/invoices`);
+        const { data: invoices } = await invRes.json();
+        document.getElementById('stat-invoices').textContent = invoices.length;
+
+        // Simple issues display
+        el.innerHTML = `<p style="color:#94a3b8; font-size:0.85rem;">Run "Analyse" on a supplier to see issues in the context results.</p>`;
+        document.getElementById('stat-issues').textContent = '—';
+    } catch(e) {
+        el.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
+    }
+}
+
+// ─── Analyse Supplier (Context Retrieval) ─── //
+async function analyseSupplier(id) {
+    const el = document.getElementById('context-result');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Running retrieval pipeline...</div>';
+
+    try {
+        const res = await fetch(`${API}/api/suppliers/${id}/context?keywords=quality,defective,overdue,invoice,payment`);
+        const { data } = await res.json();
+
+        let html = '';
+
+        // Decision badge
+        const isFlagged = data.flag;
+        html += `<div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;">
+            <span class="badge ${isFlagged ? 'badge-danger' : 'badge-success'}" style="font-size:0.9rem;padding:0.4rem 1rem;">
+                ${isFlagged ? '🚨 FLAGGED' : '✅ CLEAR'}
+            </span>
+            <span style="color:#94a3b8;font-size:0.85rem;">
+                ${data.supplier?.name || 'Unknown'} — ${data.summary?.total_issues || 0} issues, ${data.summary?.total_invoices || 0} invoices
+            </span>
+        </div>`;
+
+        // Reasons
+        if (data.reasons?.length) {
+            html += '<ul class="reasons">';
+            data.reasons.forEach(r => html += `<li>⚠️ ${r}</li>`);
+            html += '</ul>';
+        } else {
+            html += '<ul class="reasons clear"><li>✅ No significant risk factors detected</li></ul>';
+        }
+
+        // Trend info
+        if (data.trendInfo) {
+            const t = data.trendInfo;
+            const arrowClass = t.trend === 'worsening' ? 'trend-up' : t.trend === 'improving' ? 'trend-down' : 'trend-flat';
+            const arrowIcon = t.trend === 'worsening' ? '📈' : t.trend === 'improving' ? '📉' : '📊';
+            html += `<div style="margin:0.8rem 0; padding:0.6rem 1rem; background:rgba(15,23,42,0.5); border-radius:10px; font-size:0.82rem;">
+                <span class="${arrowClass}" style="font-weight:600;">${arrowIcon} Trend: ${t.trend.toUpperCase()}</span>
+                <span style="color:#64748b; margin-left:1rem;">Recent avg: ${parseFloat(t.recentAvg).toFixed(2)} | Older avg: ${parseFloat(t.olderAvg).toFixed(2)} | Weighted: ${parseFloat(t.weightedSeverity).toFixed(2)}</span>
+            </div>`;
+        }
+
+        // Scored items table
+        if (data.items?.length) {
+            html += `<table style="margin-top:0.8rem;">
+                <thead><tr><th>#</th><th>Type</th><th>Description</th><th>Temporal</th><th>Relational</th><th>Semantic</th><th>Final</th></tr></thead><tbody>`;
+            data.items.forEach((item, idx) => {
+                const s = item.scores || {};
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td><span class="badge badge-info">${(item.record_type || '?').toUpperCase()}</span></td>
+                    <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.description || '—'}</td>
+                    <td>${scoreBar(s.temporal, 'fill-temp')}</td>
+                    <td>${scoreBar(s.relational, 'fill-rel')}</td>
+                    <td>${scoreBar(s.semantic, 'fill-sem')}</td>
+                    <td>${scoreBar(s.finalScore, 'fill-final')}</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+        }
+
+        // Update flagged count
+        document.getElementById('stat-flagged').textContent = isFlagged ? '1' : '0';
+
+        el.innerHTML = html;
+    } catch(e) {
+        el.innerHTML = `<p style="color:#f87171">Error: ${e.message}</p>`;
+    }
+}
+
+// ─── Score Bar Helper ─── //
+function scoreBar(value, fillClass) {
+    const v = parseFloat(value || 0);
+    const pct = Math.round(v * 100);
+    return `<div class="score-bar">
+        <div class="bar"><div class="fill ${fillClass}" style="width:${pct}%"></div></div>
+        <span style="font-size:0.75rem;color:#94a3b8;min-width:35px;">${v.toFixed(2)}</span>
+    </div>`;
+}
+
+// ─── Seed Demo Data ─── //
+async function seedData() {
+    const el = document.getElementById('context-result');
+    el.innerHTML = '<div class="loading"><div class="spinner"></div>Seeding demo data...</div>';
+
+    try {
+        // Create suppliers
+        const s1 = await (await fetch(`${API}/api/suppliers`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: 'Acme Manufacturing Co.', industry: 'Manufacturing', rating: 0.35, contact: 'john@acme.com' })
+        })).json();
+
+        const s2 = await (await fetch(`${API}/api/suppliers`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: 'Globex Electronics', industry: 'Electronics', rating: 0.85, contact: 'jane@globex.com' })
+        })).json();
+
+        const acmeId = s1.data.id;
+        const globexId = s2.data.id;
+
+        // Create issues for Acme
+        const issues = [
+            { supplier_id: acmeId, description: 'Defective batch of steel components — 15% failure rate', severity: 4, status: 'open' },
+            { supplier_id: acmeId, description: 'Late delivery — shipment arrived 3 weeks past due date', severity: 3, status: 'resolved' },
+            { supplier_id: acmeId, description: 'Quality degradation in summer batches', severity: 5, status: 'open' },
+            { supplier_id: acmeId, description: 'Invoice discrepancy — charged for undelivered items', severity: 3, status: 'resolved' },
+        ];
+
+        // We need an issues route — let's use direct approach
+        // For now, create invoices which auto-trigger retrieval
+        await fetch(`${API}/api/invoices`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ supplier_id: acmeId, amount: 12500, payment_status: 'paid', invoice_date: '2026-01-10', description: 'Q4 steel components' })
+        });
+        await fetch(`${API}/api/invoices`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ supplier_id: acmeId, amount: 8900, payment_status: 'pending', invoice_date: '2026-01-15', due_date: '2026-02-15', description: 'January batch — disputed quality' })
+        });
+        await fetch(`${API}/api/invoices`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ supplier_id: globexId, amount: 25000, payment_status: 'paid', invoice_date: '2026-02-01', description: 'Premium electronics batch' })
+        });
+
+        el.innerHTML = '<p style="color:#4ade80;font-size:0.85rem;">✅ Demo data seeded! Click "Refresh Dashboard" to see the data, then "Analyse" a supplier.</p>';
+        await loadDashboard();
+    } catch(e) {
+        el.innerHTML = `<p style="color:#f87171">Error seeding: ${e.message}</p>`;
+    }
+}
+
+// ─── Issues Route (add to server) ─── //
+// We need an issues API route for the seed function
+
+// ─── Init ─── //
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+
+</body>
+</html>
