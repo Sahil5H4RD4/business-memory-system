@@ -44,11 +44,21 @@ app.get('/health', (req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// Routes (will be added in later commits)
+// Routes
 // ---------------------------------------------------------------------------
 
-// supplier routes  → Commit 9
-// invoice routes   → Commit 9
+const supplierRoutes = require('./routes/supplier.routes');
+const invoiceRoutes = require('./routes/invoice.routes');
+
+app.use('/api/suppliers', supplierRoutes);
+app.use('/api/invoices', invoiceRoutes);
+
+// ---------------------------------------------------------------------------
+// Database Initialization
+// ---------------------------------------------------------------------------
+
+const db = require('./db');
+db.testConnection().then(() => db.initializeSchema());
 
 // ---------------------------------------------------------------------------
 // Start Server
