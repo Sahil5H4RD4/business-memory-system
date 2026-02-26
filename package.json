@@ -1,0 +1,27 @@
+{
+  "name": "business-memory-system",
+  "version": "1.0.0",
+  "description": "A robust memory management layer designed for AI agents in business environments. This system orchestrates Immediate, Episodic, Semantic, and Temporal memory types to ensure AI agents maintain relevant context for decision-making.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sahil5H4RD4/business-memory-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sahil5H4RD4/business-memory-system/issues"
+  },
+  "homepage": "https://github.com/Sahil5H4RD4/business-memory-system#readme",
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "pg": "^8.19.0"
+  }
+}

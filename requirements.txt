@@ -1,5 +1,0 @@
-# Standard library only for now
-# For future expansion:
-# numpy
-# torch
-# faiss-cpu
