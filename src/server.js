@@ -68,10 +68,19 @@ db.testConnection().then(() => db.initializeSchema());
 // Start Server
 // ---------------------------------------------------------------------------
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
     console.log(`\n🧠 Business Context Memory Engine`);
     console.log(`   Server running on http://localhost:${PORT}`);
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}\n`);
+});
+
+// Graceful shutdown handling
+process.on('SIGINT', () => {
+    console.log('\nGracefully shutting down from SIGINT (Ctrl-C)');
+    server.close(() => {
+        console.log('Server closed.');
+        process.exit(0);
+    });
 });
 
 module.exports = app;
